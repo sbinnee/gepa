@@ -116,6 +116,7 @@ class GEPAState(Generic[RolloutOutput]):
         valset_score: float,
         valset_outputs: Any,
         valset_subscores: list[float],
+        valset_trajectories: Any|None,
         run_dir: str | None,
         num_metric_calls_by_discovery_of_new_program: int
     ):
@@ -140,7 +141,13 @@ class GEPAState(Generic[RolloutOutput]):
                 if run_dir is not None:
                     os.makedirs(os.path.join(run_dir, "generated_best_outputs_valset", f"task_{task_idx}"), exist_ok=True)
                     with open(os.path.join(run_dir, "generated_best_outputs_valset", f"task_{task_idx}", f"iter_{self.i+1}_prog_{new_program_idx}.json"), "w") as f:
-                        json.dump(valset_outputs[task_idx], f, indent=4, default=json_default)
+                        if valset_trajectories is not None:
+                            json.dump({
+                                'rollout_output': valset_outputs[task_idx],
+                                'trajectory': valset_trajectories[task_idx],
+                            }, f, indent=2, default=json_default)
+                        else:
+                            json.dump(valset_outputs[task_idx], f, indent=4, default=json_default)
             elif new_score == old_score:
                 self.program_at_pareto_front_valset[task_idx].add(new_program_idx)
                 if self.best_outputs_valset is not None:

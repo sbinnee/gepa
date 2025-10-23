@@ -90,7 +90,7 @@ class GEPAEngine(Generic[DataInst, Trajectory, RolloutOutput]):
     ) -> tuple[int, int]:
         num_metric_calls_by_discovery = state.total_num_evals
 
-        valset_outputs, valset_subscores = self._val_evaluator()(new_program)
+        valset_outputs, valset_subscores, valset_trajectories = self._val_evaluator()(new_program)
         valset_score = sum(valset_subscores) / len(valset_subscores)
 
         state.num_full_ds_evals += 1
@@ -103,6 +103,7 @@ class GEPAEngine(Generic[DataInst, Trajectory, RolloutOutput]):
             valset_score=valset_score,
             valset_outputs=valset_outputs,
             valset_subscores=valset_subscores,
+            valset_trajectories=valset_trajectories,
             run_dir=self.run_dir,
             num_metric_calls_by_discovery_of_new_program=num_metric_calls_by_discovery,
         )

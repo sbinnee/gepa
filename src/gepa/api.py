@@ -246,8 +246,8 @@ def optimize(
     )
 
     def evaluator(inputs, prog):
-        eval_out = adapter.evaluate(inputs, prog, capture_traces=False)
-        return eval_out.outputs, eval_out.scores
+        eval_out = adapter.evaluate(inputs, prog, capture_traces=True)
+        return eval_out.outputs, eval_out.scores, eval_out.trajectories
 
     merge_proposer = None
     if use_merge:
