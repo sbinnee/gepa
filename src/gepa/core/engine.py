@@ -95,6 +95,7 @@ class GEPAEngine(Generic[DataInst, Trajectory, RolloutOutput]):
 
         state.num_full_ds_evals += 1
         state.total_num_evals += len(valset_subscores)
+        print(f'[DEBUG] {state.total_num_evals=}')
 
         new_program_idx, linear_pareto_front_program_idx = state.update_state_with_new_program(
             parent_program_idx=parent_program_idx,
@@ -225,7 +226,7 @@ class GEPAEngine(Generic[DataInst, Trajectory, RolloutOutput]):
                     self.merge_proposer.last_iter_found_new_program = False
 
                 # 2) Reflective mutation proposer
-                proposal = self.reflective_proposer.propose(state)
+                proposal = self.reflective_proposer.propose(state, self.run_dir)
                 if proposal is None:
                     self.logger.log(f"Iteration {state.i + 1}: Reflective mutation did not propose a new candidate")
                     continue

@@ -1,7 +1,7 @@
 # Copyright (c) 2025 Lakshya A Agrawal and the GEPA contributors
 # https://github.com/gepa-ai/gepa
 
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 from typing import Any, Generic, Protocol, TypeVar
 
 # Generic type aliases matching your original
@@ -25,6 +25,9 @@ class EvaluationBatch(Generic[Trajectory, RolloutOutput]):
     outputs: list[RolloutOutput]
     scores: list[float]
     trajectories: list[Trajectory] | None = None
+
+    def to_dict(self) -> dict:
+        return asdict(self)
 
 class ProposalFn(Protocol):
     def __call__(

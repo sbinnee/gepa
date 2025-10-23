@@ -1,6 +1,8 @@
 # Copyright (c) 2025 Lakshya A Agrawal and the GEPA contributors
 # https://github.com/gepa-ai/gepa
 
+import json
+import os.path
 from typing import Any
 
 from gepa.core.adapter import DataInst, GEPAAdapter, RolloutOutput, Trajectory
@@ -74,7 +76,7 @@ class ReflectiveMutationProposer(ProposeNewCandidate):
             )["new_instruction"]
         return new_texts
 
-    def propose(self, state: GEPAState) -> CandidateProposal | None:
+    def propose(self, state: GEPAState, run_dir: str|None) -> CandidateProposal | None:
         i = state.i + 1
 
         curr_prog_id = self.candidate_selector.select_candidate_idx(state)
@@ -113,7 +115,17 @@ class ReflectiveMutationProposer(ProposeNewCandidate):
         # 3) Build reflective dataset and propose texts
         try:
             reflective_dataset = self.adapter.make_reflective_dataset(curr_prog, eval_curr, predictor_names_to_update)
+
+            if run_dir is not None:
+                with open(os.path.join(run_dir, f'_reflective_dataset_{i}.json'), 'w') as _f:
+                    json.dump(reflective_dataset, _f, indent=2)
+
             new_texts = self.propose_new_texts(curr_prog, reflective_dataset, predictor_names_to_update)
+
+            if run_dir is not None:
+                with open(os.path.join(run_dir, f'_new_texts_{i}.json'), 'w') as _f:
+                    json.dump(new_texts, _f, indent=2)
+
             for pname, text in new_texts.items():
                 self.logger.log(f"Iteration {i}: Proposed new text for {pname}: {text}")
             self.experiment_tracker.log_metrics(
@@ -133,6 +145,9 @@ class ReflectiveMutationProposer(ProposeNewCandidate):
             new_candidate[pname] = text
 
         eval_new = self.adapter.evaluate(minibatch, new_candidate, capture_traces=False)
+        if run_dir is not None:
+            with open(os.path.join(run_dir, f'_eval_new_{i}.json'), 'w') as _f:
+                json.dump(eval_new.to_dict(), _f, indent=2)
         state.total_num_evals += len(subsample_ids)
         state.full_program_trace[-1]["new_subsample_scores"] = eval_new.scores
 

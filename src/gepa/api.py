@@ -1,6 +1,7 @@
 # Copyright (c) 2025 Lakshya A Agrawal and the GEPA contributors
 # https://github.com/gepa-ai/gepa
 
+import json
 import os
 import random
 from typing import Any, Callable
@@ -281,4 +282,7 @@ def optimize(
         state = engine.run()
 
     result = GEPAResult.from_state(state)
+    if run_dir is not None:
+        with open(os.path.join(run_dir, '_gepa_result.json'), 'w') as _f:
+            json.dump(result.to_dict(), _f, indent=2)
     return result

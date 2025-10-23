@@ -166,7 +166,7 @@ def write_eval_output_to_directory(
 def initialize_gepa_state(
     run_dir: str | None,
     logger,
-    seed_candidate: dict[str, str],
+    seed_candidate: dict[str, str],  # It's always one. We need to fix it.
     valset_evaluator: Callable[[dict[str, str]], tuple[list[RolloutOutput], list[float]]],
     track_best_outputs: bool = False,
 ):
