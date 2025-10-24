@@ -4,6 +4,7 @@
 from typing import Any, Callable, TypedDict
 
 from gepa.core.adapter import EvaluationBatch, GEPAAdapter
+from gepa.logging.cost_tracker import CostTracker
 
 
 # DataInst, Trajectory, RolloutOutput
@@ -25,6 +26,7 @@ class DefaultAdapter(GEPAAdapter[DefaultDataInst, DefaultTrajectory, DefaultRoll
         model: str | Callable,
         failure_score: float = 0.0,
         max_litellm_workers: int = 10,
+        cost_tracker: CostTracker | None = None,
     ):
         if isinstance(model, str):
             import litellm
@@ -33,6 +35,7 @@ class DefaultAdapter(GEPAAdapter[DefaultDataInst, DefaultTrajectory, DefaultRoll
 
         self.failure_score = failure_score
         self.max_litellm_workers = max_litellm_workers
+        self.cost_tracker = cost_tracker
 
     def evaluate(
         self,
@@ -60,7 +63,13 @@ class DefaultAdapter(GEPAAdapter[DefaultDataInst, DefaultTrajectory, DefaultRoll
 
         try:
             if isinstance(self.model, str):
-                responses = [resp.choices[0].message.content.strip() for resp in self.litellm.batch_completion(model=self.model, messages=litellm_requests, max_workers=self.max_litellm_workers)]
+                batch_responses = self.litellm.batch_completion(model=self.model, messages=litellm_requests, max_workers=self.max_litellm_workers)
+                responses = []
+                for resp in batch_responses:
+                    responses.append(resp.choices[0].message.content.strip())
+                    # Track cost from batch response if cost_tracker is available
+                    if self.cost_tracker is not None:
+                        self.cost_tracker.add_task_lm_call(resp, model=self.model)
             else:
                 responses = [self.model(messages) for messages in litellm_requests]
         except Exception as e:

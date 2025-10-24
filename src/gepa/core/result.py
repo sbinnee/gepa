@@ -56,6 +56,9 @@ class GEPAResult(Generic[RolloutOutput]):
     run_dir: str | None = None
     seed: int | None = None
 
+    # Cost tracking (optional)
+    cost_summary: dict | None = None
+
     # -------- Convenience properties --------
     @property
     def num_candidates(self) -> int:
@@ -92,6 +95,7 @@ class GEPAResult(Generic[RolloutOutput]):
             num_full_val_evals=self.num_full_val_evals,
             run_dir=self.run_dir,
             seed=self.seed,
+            cost_summary=self.cost_summary,
             best_idx=self.best_idx,
         )
 
@@ -100,6 +104,11 @@ class GEPAResult(Generic[RolloutOutput]):
         """
         Build a GEPAResult from a GEPAState.
         """
+        # Extract cost summary from cost_tracker if available
+        cost_summary = None
+        if hasattr(state, "cost_tracker"):
+            cost_summary = state.cost_tracker.get_summary()
+
         return GEPAResult(
             candidates=list(state.program_candidates),
             parents=list(state.parent_program_for_candidate),
@@ -112,4 +121,5 @@ class GEPAResult(Generic[RolloutOutput]):
             num_full_val_evals=getattr(state, "num_full_ds_evals", None),
             run_dir=run_dir,
             seed=seed,
+            cost_summary=cost_summary,
         )

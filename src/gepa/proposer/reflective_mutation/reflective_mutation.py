@@ -117,13 +117,13 @@ class ReflectiveMutationProposer(ProposeNewCandidate):
             reflective_dataset = self.adapter.make_reflective_dataset(curr_prog, eval_curr, predictor_names_to_update)
 
             if run_dir is not None:
-                with open(os.path.join(run_dir, f'_reflective_dataset_{i}.json'), 'w') as _f:
+                with open(os.path.join(run_dir, f'_mutation_reflective_dataset_{i}.json'), 'w') as _f:
                     json.dump(reflective_dataset, _f, indent=2)
 
             new_texts = self.propose_new_texts(curr_prog, reflective_dataset, predictor_names_to_update)
 
             if run_dir is not None:
-                with open(os.path.join(run_dir, f'_new_texts_{i}.json'), 'w') as _f:
+                with open(os.path.join(run_dir, f'_mutation_new_texts_{i}.json'), 'w') as _f:
                     json.dump(new_texts, _f, indent=2)
 
             for pname, text in new_texts.items():
@@ -144,9 +144,9 @@ class ReflectiveMutationProposer(ProposeNewCandidate):
             assert pname in new_candidate, f"{pname} missing in candidate"
             new_candidate[pname] = text
 
-        eval_new = self.adapter.evaluate(minibatch, new_candidate, capture_traces=False)
+        eval_new = self.adapter.evaluate(minibatch, new_candidate, capture_traces=True)
         if run_dir is not None:
-            with open(os.path.join(run_dir, f'_eval_new_{i}.json'), 'w') as _f:
+            with open(os.path.join(run_dir, f'_mutation_eval_new_{i}.json'), 'w') as _f:
                 json.dump(eval_new.to_dict(), _f, indent=2)
         state.total_num_evals += len(subsample_ids)
         state.full_program_trace[-1]["new_subsample_scores"] = eval_new.scores

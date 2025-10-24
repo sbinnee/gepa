@@ -6,6 +6,7 @@ from typing import Any, Callable, Generic
 
 from gepa.core.state import GEPAState, initialize_gepa_state
 from gepa.logging.utils import log_detailed_metrics_after_discovering_new_program
+from gepa.logging.cost_tracker import CostTracker
 from gepa.proposer.merge import MergeProposer
 from gepa.proposer.reflective_mutation.reflective_mutation import ReflectiveMutationProposer
 
@@ -45,6 +46,8 @@ class GEPAEngine(Generic[DataInst, Trajectory, RolloutOutput]):
         use_cloudpickle: bool = False,
         # Budget and Stop Condition
         stop_callback: Callable[[Any], bool] | None = None,
+        # Cost tracking
+        cost_tracker: CostTracker | None = None,
     ):
         self.logger = logger
         self.run_dir = run_dir
@@ -74,6 +77,9 @@ class GEPAEngine(Generic[DataInst, Trajectory, RolloutOutput]):
         self.use_cloudpickle = use_cloudpickle
 
         self.raise_on_exception = raise_on_exception
+
+        # Cost tracking
+        self.cost_tracker = cost_tracker if cost_tracker is not None else CostTracker()
 
     def _val_evaluator(self) -> Callable[[dict[str, str]], tuple[list[RolloutOutput], list[float]]]:
         assert self.valset is not None
@@ -265,6 +271,9 @@ class GEPAEngine(Generic[DataInst, Trajectory, RolloutOutput]):
         # Close progress bar if it exists
         if self.display_progress_bar:
             progress_bar.close()
+
+        # Attach cost tracker to state before saving and returning
+        state.cost_tracker = self.cost_tracker
 
         state.save(self.run_dir)
         return state

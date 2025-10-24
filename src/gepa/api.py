@@ -12,6 +12,7 @@ from gepa.core.engine import GEPAEngine
 from gepa.core.result import GEPAResult
 from gepa.logging.experiment_tracker import create_experiment_tracker
 from gepa.logging.logger import LoggerProtocol, StdOutLogger
+from gepa.logging.cost_tracker import CostTracker
 from gepa.proposer.merge import MergeProposer
 from gepa.proposer.reflective_mutation.base import LanguageModel, ReflectionComponentSelector
 from gepa.proposer.reflective_mutation.reflective_mutation import ReflectiveMutationProposer
@@ -136,11 +137,14 @@ def optimize(
     # Reproducibility
     - seed: The seed to use for the random number generator.
     """
+    # Create cost tracker instance (will be passed to adapters and engine)
+    cost_tracker = CostTracker()
+
     if adapter is None:
         assert task_lm is not None, (
             "Since no adapter is provided, GEPA requires a task LM to be provided. Please set the `task_lm` parameter."
         )
-        adapter = DefaultAdapter(model=task_lm)
+        adapter = DefaultAdapter(model=task_lm, cost_tracker=cost_tracker)
     else:
         assert task_lm is None, (
             "Since an adapter is provided, GEPA does not require a task LM to be provided. Please set the `task_lm` parameter to None."
@@ -192,11 +196,13 @@ def optimize(
         import litellm
 
         reflection_lm_name = reflection_lm
-        reflection_lm = (
-            lambda prompt: litellm.completion(model=reflection_lm_name, messages=[{"role": "user", "content": prompt}])
-            .choices[0]
-            .message.content
-        )
+        # Wrap reflection_lm to track costs
+        original_reflection_lm = lambda prompt: litellm.completion(model=reflection_lm_name, messages=[{"role": "user", "content": prompt}])
+
+        def reflection_lm(prompt):
+            response = original_reflection_lm(prompt)
+            cost_tracker.add_reflection_lm_call(response, model=reflection_lm_name)
+            return response.choices[0].message.content
 
     if logger is None:
         logger = StdOutLogger()
@@ -276,10 +282,14 @@ def optimize(
         raise_on_exception=raise_on_exception,
         stop_callback=stop_callback,
         use_cloudpickle=use_cloudpickle,
+        cost_tracker=cost_tracker,
     )
 
     with experiment_tracker:
         state = engine.run()
+
+    # Log cost summary
+    cost_tracker.log_summary(logger)
 
     result = GEPAResult.from_state(state)
     if run_dir is not None:

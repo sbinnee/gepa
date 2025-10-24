@@ -7,6 +7,7 @@ from typing import Any, Callable, Generic
 
 from gepa.core.adapter import RolloutOutput
 from gepa.gepa_utils import idxmax, json_default
+from gepa.logging.cost_tracker import CostTracker
 
 
 class GEPAState(Generic[RolloutOutput]):
@@ -65,6 +66,9 @@ class GEPAState(Generic[RolloutOutput]):
             self.best_outputs_valset = [[(0, output)] for output in base_valset_eval_output[0]]
 
         self.full_program_trace = []
+
+        # Cost tracking
+        self.cost_tracker = CostTracker()
 
     def is_consistent(self):
         assert len(self.program_candidates) == len(self.program_full_scores_val_set)
