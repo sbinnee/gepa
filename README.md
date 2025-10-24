@@ -12,6 +12,9 @@
 
 ## Overview
 
+> [!IMPORTANT]
+> This is a fork of https://github.com/gepa-ai/gepa
+
 **GEPA** (Genetic-Pareto) is a framework for **optimizing arbitrary systems composed of text components**—like AI prompts, code snippets, or textual specs—against any evaluation metric. It employs LLMs to reflect on system behavior, using feedback from execution and evaluation traces to drive targeted improvements. Through iterative mutation, reflection, and Pareto-aware candidate selection, GEPA evolves robust, high-performing variants with minimal evaluations, co-evolving multiple components in modular systems for domain-specific gains.
 
 This repository provides the official implementation of the GEPA algorithm as proposed in the paper titled "GEPA: Reflective Prompt Evolution Can Outperform Reinforcement Learning" ([https://arxiv.org/abs/2507.19457](https://arxiv.org/abs/2507.19457)). In order to reproduce experiments from the paper, we provide a separate [reproduction artifact](https://github.com/gepa-ai/gepa-artifact).
